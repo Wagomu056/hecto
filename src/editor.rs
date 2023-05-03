@@ -2,6 +2,8 @@ use std::io::{self};
 use termion::event::Key;
 use crate::Terminal;
 
+const VERSION: &str = env!("CARGO_PKG_VERSION");
+
 pub struct Editor {
     should_quit: bool,
     terminal: Terminal,
@@ -26,9 +28,9 @@ impl Editor {
 
     fn refresh_screen(&self) -> Result<(), io::Error> {
         Terminal::cursor_hide();
-        Terminal::clear_screen();
         Terminal::cursor_position(0, 0);
         if self.should_quit {
+            Terminal::clear_screen();
             println!("Goodbye.\r");
         } else {
             self.draw_rows();
@@ -47,9 +49,26 @@ impl Editor {
         Ok(())
     }
 
+    fn draw_welcome_message(&self) {
+        let mut welcome_message = format!("Hecto editor -- version {}\r", VERSION);
+        let width = self.terminal.size().width as usize;
+        let len = welcome_message.len();
+        let padding = width.saturating_sub(len) / 2;
+        let spaces = " ".repeat(padding.saturating_sub(1));
+        welcome_message = format!("~{}{}", spaces, welcome_message);
+        welcome_message.truncate(width);
+        println!("{}\r", welcome_message);
+    }
+
     fn draw_rows(&self) {
-        for _ in 0..self.terminal.size().height - 1 {
-            println!("~\r");
+        let height = self.terminal.size().height;
+        for row in 0..height - 1 {
+            if row == height / 3 {
+                self.draw_welcome_message();
+            } else {
+                Terminal::clear_current_line();
+                println!("~\r");
+            }
         }
     }
 
