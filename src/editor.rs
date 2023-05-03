@@ -2,7 +2,7 @@ use std::io::{self, stdout, Write};
 use termion::event::Key;
 use termion::input::TermRead;
 use termion::raw::IntoRawMode;
-use crate::terminal::Terminal;
+use crate::Terminal;
 
 pub struct Editor {
     should_quit: bool,
