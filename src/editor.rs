@@ -20,6 +20,7 @@ struct StatusMessage {
     text: String,
     time: Instant,
 }
+
 impl StatusMessage {
     fn from(message: String) -> Self {
         Self {
@@ -39,7 +40,7 @@ pub struct Editor {
 }
 
 impl Editor {
-    pub fn run(&mut self){
+    pub fn run(&mut self) {
         loop {
             if let Err(error) = self.refresh_screen() {
                 die(error);
@@ -65,7 +66,7 @@ impl Editor {
             self.draw_rows();
             self.draw_status_bar();
             self.draw_message_bar();
-            Terminal::cursor_position(&Position{
+            Terminal::cursor_position(&Position {
                 x: self.cursor_position.x.saturating_sub(self.offset.x),
                 y: self.cursor_position.y.saturating_sub(self.offset.y),
             });
@@ -119,6 +120,17 @@ impl Editor {
         let pressed_key = Terminal::read_key()?;
         match pressed_key {
             Key::Ctrl('q') => self.should_quit = true,
+            Key::Char(c) => {
+                self.document.insert(&self.cursor_position, c);
+                self.move_cursor(Key::Right);
+            }
+            Key::Delete => self.document.delete(&self.cursor_position),
+            Key::Backspace => {
+                if self.cursor_position.x > 0 || self.cursor_position.y > 0 {
+                    self.move_cursor(Key::Left);
+                    self.document.delete(&self.cursor_position);
+                }
+            }
             Key::Up
             | Key::Down
             | Key::Left
@@ -135,7 +147,7 @@ impl Editor {
     }
 
     fn scroll(&mut self) {
-        let Position {x, y} = self.cursor_position;
+        let Position { x, y } = self.cursor_position;
         let width = self.terminal.size().width as usize;
         let height = self.terminal.size().height as usize;
         let mut offset = &mut self.offset;
@@ -155,7 +167,7 @@ impl Editor {
 
     fn move_cursor(&mut self, key: Key) {
         let terminal_height = self.terminal.size().height as usize;
-        let Position { mut y, mut x} = self.cursor_position;
+        let Position { mut y, mut x } = self.cursor_position;
         let height = self.document.len();
         let mut width = if let Some(row) = self.document.row(y) {
             row.len()
@@ -169,7 +181,7 @@ impl Editor {
                 if y < height {
                     y = y.saturating_add(1)
                 }
-            },
+            }
             Key::Left => {
                 if x > 0 {
                     x -= 1;
@@ -189,7 +201,7 @@ impl Editor {
                     y += 1;
                     x = 0;
                 }
-            },
+            }
             Key::PageUp => {
                 y = if y > terminal_height {
                     y - terminal_height
@@ -270,7 +282,7 @@ impl Editor {
             Document::default()
         };
 
-        Self{
+        Self {
             should_quit: false,
             terminal: Terminal::default().expect("Failed to initialize terminal"),
             document,
